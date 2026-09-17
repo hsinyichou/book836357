@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的個人書架檢索系統</title>
+  <style>
+    :root {
+      --primary-color: #2b5797;
+      --accent-color: #27ae60;
+      --warning-color: #f39c12;
+      --danger-color: #e74c3c;
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 16px;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      color: var(--primary-color);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: #666;
+    }
+
+    .controls-panel {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input, select, button {
+      font-size: 1rem;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    input[type="text"], select {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: bold;
+      transition: opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .btn-add {
+      background-color: var(--accent-color);
+      width: 100%;
+    }
+
+    .stats {
+      font-size: 0.9rem;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .book-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      border: 1px solid #eee;
+      transition: transform 0.2s;
+    }
+
+    .book-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .category-tag {
+      display: inline-block;
+      background: #eef4ff;
+      color: var(--primary-color);
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      align-self: flex-start;
+      font-weight: bold;
+    }
+
+    .location-tag {
+      display: inline-block;
+      background: #fff3cd;
+      color: #856404;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      margin-left: 4px;
+      align-self: flex-start;
+      font-weight: bold;
+    }
+
+    .book-title {
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .book-author {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .book-isbn {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-edit {
+      background-color: var(--warning-color);
+      font-size: 0.85rem;
+      padding: 6px 12px;
+    }
+
+    .btn-delete {
+      background-color: var(--danger-color);
+      font-size: 0.85rem;
+      padding: 6px 12px;
+    }
+
+    /* Modal 彈窗樣式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .close-btn {
+      background: none;
+      color: #333;
+      font-size: 1.5rem;
+      padding: 0 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .isbn-fetch-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    @media (min-width: 600px) {
+      body { padding: 24px; }
+      .controls-panel { padding: 20px; }
+      .btn-add { width: auto; align-self: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📚 我的個人書架檢索系統</h1>
+    <p>快速查詢與建立個人藏書庫</p>
+  </header>
+
+  <section class="controls-panel">
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="搜尋書名、作者..." oninput="filterBooks()">
+      <input type="text" id="isbnSearchInput" placeholder="搜尋 ISBN 碼..." oninput="filterBooks()">
+      <select id="categoryFilter" onchange="filterBooks()">
+        <option value="">所有分類</option>
+      </select>
+    </div>
+    <div class="stats">
+      <span id="bookCount">共 0 本書籍</span>
+      <button class="btn-add" onclick="openAddModal()">+ 新增書籍</button>
+    </div>
+  </section>
+
+  <main class="book-grid" id="bookContainer"></main>
+
+  <!-- 查看詳細資料模組 -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="detailTitle">書籍詳情</h2>
+        <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- 新增書籍模組 -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>新增書籍</h2>
+        <button class="close-btn" onclick="closeModal('addModal')">&times;</button>
+      </div>
+      <form id="addBookForm" onsubmit="handleAddBook(event)">
+        <div class="form-group">
+          <label>ISBN 碼 (自動帶入)</label>
+          <div class="isbn-fetch-row">
+            <input type="text" id="addIsbn" placeholder="輸入 10 或 13 碼 ISBN">
+            <button type="button" onclick="fetchBookByISBN()">帶入資料</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>ISBN 掃描 / 圖片辨識</label>
+          <input type="file" id="isbnImageInput" accept="image/*" onchange="handleImageScan(event)">
+        </div>
+        <div class="form-group">
+          <label>書名 *</label>
+          <input type="text" id="addTitle" required>
+        </div>
+        <div class="form-group">
+          <label>作者 *</label>
+          <input type="text" id="addAuthor" required>
+        </div>
+        <div class="form-group">
+          <label>分類 (下拉選單) *</label>
+          <select id="addCategory" required></select>
+        </div>
+        <div class="form-group">
+          <label>書籍位置 (下拉選單) *</label>
+          <select id="addLocation" required></select>
+        </div>
+        <div class="form-group">
+          <label>出版年份/簡介備註</label>
+          <input type="text" id="addNote" placeholder="如：2023年出版、朋友贈送">
+        </div>
+        <button type="submit" class="btn-add" style="margin-top: 10px;">儲存書籍</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 編輯書籍模組 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>編輯書籍資料</h2>
+        <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
+      </div>
+      <form id="editBookForm" onsubmit="handleEditBook(event)">
+        <input type="hidden" id="editBookId">
+        <div class="form-group">
+          <label>ISBN 碼</label>
+          <input type="text" id="editIsbn">
+        </div>
+        <div class="form-group">
+          <label>書名 *</label>
+          <input type="text" id="editTitle" required>
+        </div>
+        <div class="form-group">
+          <label>作者 *</label>
+          <input type="text" id="editAuthor" required>
+        </div>
+        <div class="form-group">
+          <label>分類 (下拉選單) *</label>
+          <select id="editCategory" required></select>
+        </div>
+        <div class="form-group">
+          <label>書籍位置 (下拉選單) *</label>
+          <select id="editLocation" required></select>
+        </div>
+        <div class="form-group">
+          <label>出版年份/簡介備註</label>
+          <input type="text" id="editNote">
+        </div>
+        <button type="submit" class="btn-add" style="margin-top: 10px; background-color: var(--warning-color);">更新資料</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // 預設分類選項
+    const categories = ["日本文學", "心理勵志", "商業設計", "資訊科技", "文學小說", "社會科學", "財經投資", "人文歷史"];
+    
+    // 預設書籍位置選項
+    const locations = ["書櫃左", "書櫃右", "二樓客房", "二樓主臥", "辦公室", "桃園二樓", "桃園四樓", "其他"];
+
+    // 預設 10 筆範例資料
+    const defaultBooks = [
+      { id: 1, title: "山茶花文具店", author: "小川糸", category: "日本文學", location: "書櫃左", isbn: "9789861336275", note: "鐮倉代筆人的溫暖故事" },
+      { id: 2, title: "原子習慣", author: "詹姆斯·克利爾", category: "心理勵志", location: "二樓主臥", isbn: "9789861755267", note: "細微改變帶來巨大成就" },
+      { id: 3, title: "被討厭的勇氣", author: "岸見一郎, 古賀史健", category: "心理勵志", location: "書櫃右", isbn: "9789861371955", note: "阿德勒心理學學說" },
+      { id: 4, title: "設計思考改造世界", author: "提姆·布朗", category: "商業設計", location: "辦公室", isbn: "9789862166161", note: "IDEO CEO 談創新設計" },
+      { id: 5, title: "Clean Code 敏捷開發專業專題", author: "Robert C. Martin", category: "資訊科技", location: "辦公室", isbn: "9789862017050", note: "軟體匠藝守則" },
+      { id: 6, title: "百年孤寂", author: "加布列·賈西亞·馬奎斯", category: "文學小說", location: "桃園二樓", isbn: "9789573335276", note: "魔幻寫實主義經典" },
+      { id: 7, title: "被隱形的女性", author: "卡洛琳·克里亞朵·佩雷茲", category: "社會科學", location: "桃園四樓", isbn: "9789570855661", note: "用數據揭露用男為本的世界" },
+      { id: 8, title: "富爸爸，窮爸爸", author: "羅勃特·T·清崎", category: "財經投資", location: "二樓客房", isbn: "9789861754406", note: "理財觀念啟蒙" },
+      { id: 9, title: "快思慢想", author: "丹尼爾·康納曼", category: "心理勵志", location: "二樓主臥", isbn: "9789862416136", note: "行為經濟學與大腦思考" },
+      { id: 10, title: "深入淺出 JavaScript 程式設計", author: "Eric Freeman", category: "資訊科技", location: "辦公室", isbn: "9789863473268", note: "JS 基礎入門經典" }
+    ];
+
+    // 初始化 LocalStorage 資料庫
+    let books = JSON.parse(localStorage.getItem('my_bookshelf_data')) || defaultBooks;
+
+    // 頁面載入初始化
+    window.onload = function() {
+      initDropdowns();
+      renderBooks(books);
+    };
+
+    function saveBooks() {
+      localStorage.setItem('my_bookshelf_data', JSON.stringify(books));
+    }
+
+    // 初始化分類與位置的下拉選單
+    function initDropdowns() {
+      const filterSelect = document.getElementById('categoryFilter');
+      const addCategorySelect = document.getElementById('addCategory');
+      const addLocationSelect = document.getElementById('addLocation');
+      const editCategorySelect = document.getElementById('editCategory');
+      const editLocationSelect = document.getElementById('editLocation');
+
+      categories.forEach(cat => {
+        filterSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+        addCategorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+        editCategorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
+
+      locations.forEach(loc => {
+        addLocationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+        editLocationSelect.innerHTML += `<option value="${loc}">${loc}</option>`;
+      });
+    }
+
+    // 渲染書籍清單
+    function renderBooks(data) {
+      const container = document.getElementById('bookContainer');
+      document.getElementById('bookCount').textContent = `共 ${data.length} 本書籍`;
+      container.innerHTML = '';
+
+      if(data.length === 0) {
+        container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #888; padding: 40px;">找不到符合條件的書籍</p>';
+        return;
+      }
+
+      data.forEach(book => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.onclick = () => showDetail(book);
+        card.innerHTML = `
+          <div>
+            <div>
+              <span class="category-tag">${book.category}</span>
+              ${book.location ? `<span class="location-tag">📍 ${book.location}</span>` : ''}
+            </div>
+            <div class="book-title">${book.title}</div>
+            <div class="book-author">作者：${book.author}</div>
+            <div class="book-isbn">ISBN: ${book.isbn || '無'}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-edit" onclick="openEditModal(event, ${book.id})">編輯</button>
+            <button class="btn-delete" onclick="deleteBook(event, ${book.id})">刪除</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 多重條件篩選
+    function filterBooks() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const isbnKey = document.getElementById('isbnSearchInput').value.trim();
+      const category = document.getElementById('categoryFilter').value;
+
+      const filtered = books.filter(book => {
+        const matchKeyword = book.title.toLowerCase().includes(keyword) || 
+                             book.author.toLowerCase().includes(keyword);
+        const matchIsbn = isbnKey === '' || (book.isbn && book.isbn.includes(isbnKey));
+        const matchCategory = category === '' || book.category === category;
+        return matchKeyword && matchIsbn && matchCategory;
+      });
+
+      renderBooks(filtered);
+    }
+
+    // 點擊查看完整資訊
+    function showDetail(book) {
+      document.getElementById('detailTitle').textContent = book.title;
+      document.getElementById('detailBody').innerHTML = `
+        <p style="margin-bottom: 8px;"><strong>分類：</strong>${book.category}</p>
+        <p style="margin-bottom: 8px;"><strong>書籍位置：</strong>${book.location || '未標示'}</p>
+        <p style="margin-bottom: 8px;"><strong>作者：</strong>${book.author}</p>
+        <p style="margin-bottom: 8px;"><strong>ISBN：</strong>${book.isbn || '無'}</p>
+        <p style="margin-bottom: 8px;"><strong>備註/簡介：</strong>${book.note || '無'}</p>
+      `;
+      openModal('detailModal');
+    }
+
+    // 刪除書籍
+    function deleteBook(event, id) {
+      event.stopPropagation();
+      if (confirm("確定要刪除這本書籍嗎？")) {
+        books = books.filter(b => b.id !== id);
+        saveBooks();
+        filterBooks();
+      }
+    }
+
+    // 開啟與關閉 Modal
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+    function openAddModal() {
+      document.getElementById('addBookForm').reset();
+      openModal('addModal');
+    }
+
+    // 開啟編輯 Modal 並帶入原有書籍資料
+    function openEditModal(event, id) {
+      event.stopPropagation(); // 阻止觸發卡片點擊詳細彈窗
+      const book = books.find(b => b.id === id);
+      if (!book) return;
+
+      document.getElementById('editBookId').value = book.id;
+      document.getElementById('editTitle').value = book.title;
+      document.getElementById('editAuthor').value = book.author;
+      document.getElementById('editCategory').value = book.category;
+      document.getElementById('editLocation').value = book.location || locations[0];
+      document.getElementById('editIsbn').value = book.isbn || '';
+      document.getElementById('editNote').value = book.note || '';
+
+      openModal('editModal');
+    }
+
+    // 新增書籍提交處理
+    function handleAddBook(e) {
+      e.preventDefault();
+      const newBook = {
+        id: Date.now(),
+        title: document.getElementById('addTitle').value,
+        author: document.getElementById('addAuthor').value,
+        category: document.getElementById('addCategory').value,
+        location: document.getElementById('addLocation').value,
+        isbn: document.getElementById('addIsbn').value,
+        note: document.getElementById('addNote').value
+      };
+      books.unshift(newBook);
+      saveBooks();
+      filterBooks();
+      closeModal('addModal');
+    }
+
+    // 儲存編輯後的書籍資料
+    function handleEditBook(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('editBookId').value);
+      const index = books.findIndex(b => b.id === id);
+
+      if (index !== -1) {
+        books[index] = {
+          ...books[index],
+          title: document.getElementById('editTitle').value,
+          author: document.getElementById('editAuthor').value,
+          category: document.getElementById('editCategory').value,
+          location: document.getElementById('editLocation').value,
+          isbn: document.getElementById('editIsbn').value,
+          note: document.getElementById('editNote').value
+        };
+        saveBooks();
+        filterBooks();
+        closeModal('editModal');
+      }
+    }
+
+    // 透過 Open Library API 免費抓取 ISBN 資料
+    function fetchBookByISBN() {
+      const isbn = document.getElementById('addIsbn').value.trim();
+      if (!isbn) {
+        alert("請先輸入 ISBN 碼！");
+        return;
+      }
+      
+      const titleInput = document.getElementById('addTitle');
+      titleInput.placeholder = "資料檢索中...";
+
+      fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=data&format=json`)
+        .then(response => response.json())
+        .then(data => {
+          const key = `ISBN:${isbn}`;
+          if (data[key]) {
+            const bookData = data[key];
+            document.getElementById('addTitle').value = bookData.title || '';
+            document.getElementById('addAuthor').value = bookData.authors ? bookData.authors.map(a => a.name).join(', ') : '';
+            alert("成功帶入書籍資料！");
+          } else {
+            alert("未查到此 ISBN 相關資料，請手動輸入。");
+          }
+        })
+        .catch(err => {
+          alert("檢索失敗，請檢查網路連線或改為手動輸入。");
+        })
+        .finally(() => {
+          titleInput.placeholder = "";
+        });
+    }
+
+    // 模擬圖片辨識 / 圖片模擬處理
+    function handleImageScan(e) {
+      const file = e.target.files[0];
+      if (file) {
+        alert(`已選擇圖片：${file.name}\n（此功能模擬拍攝/選取書背圖片，自動帶入測試條碼）`);
+        document.getElementById('addIsbn').value = "9789861755267";
+        fetchBookByISBN();
+      }
+    }
+  </script>
+</body>
+</html>
